@@ -123,4 +123,4 @@ Jest is used to run the tests and get feedback. SuperTest fills the gap when it 
 
 - Tests should be placed in a folder named `__tests__` along side the files or module it wants to test. 
 - It is advised to run tests along when developing using either `npm run test` or using the Jest's vscode extension.
-- Code structure should prefer dependency injection to facilitate mocking and 
+- Code structure should prefer dependency injection to facilitate mocking and general code reusability.
