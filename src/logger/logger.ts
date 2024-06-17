@@ -24,7 +24,7 @@ if (config.bunyanLogging) {
 
 const router = express.Router()
 
-//if (config.enableRequestLogging) {
+if (config.enableRequestLogging) {
   router.use((req, _res, next) => {
     logger.info({
       method: req.method,
@@ -32,6 +32,6 @@ const router = express.Router()
     })
     next()
   })
-//}
+}
 
 export { logger, router as loggerRouter }
