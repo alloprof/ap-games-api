@@ -60,6 +60,8 @@ Basic TypeScript configuration.
 
 ### jest.config.js
 
+Basic Jest configuration.
+
 ## Project architecture and adding new router
 
 Here's the project folder tree:
