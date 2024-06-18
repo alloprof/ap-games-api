@@ -1,5 +1,5 @@
-FROM bitnami/node:20.9.0 as builder
-ARG NPM_VERSION=10.2.4
+FROM bitnami/node:20.14.0 as builder
+ARG NPM_VERSION=10.7.0
 
 ARG UID=1001
 ARG GID=1001
@@ -28,7 +28,7 @@ USER node
 RUN cd /tmp/build/ && npm ci && npm run build:production
 
 # FINAL IMAGE
-FROM bitnami/node:20.9.0
+FROM bitnami/node:20.14.0
 
 COPY --from=builder /tmp/build/dist /app
 
