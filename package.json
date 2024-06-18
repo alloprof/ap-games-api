@@ -9,9 +9,10 @@
   },
   "scripts": {
     "dev": "tsc -w & node --watch dist/index.js | bunyan",
-    "test": "jest --watch",
+    "test": "jest --watchAll",
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc",
+    "build:production": "npm run clean && tsc && cp package.json package-lock.json dist/ && cd dist && npm install --only=production && cd ..",
     "coverage": "jest --coverage"
   },
   "author": "Alloprof",
