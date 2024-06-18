@@ -33,12 +33,46 @@ If not, you can launch the tests in watch mode like so:
 npm run test
 ```
 
+## Debugging the application
+
+It is possible to use the VSCode debugger and use breakpoints in the editor. Simply put a breakpoint and use Run and Debug while selecting `src/index.ts` file in the editor.
+
+Otherwise, it's possible to create a `.vscode/launch.json` file, here's an example:
+
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch API Boilerplate",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/src/index.ts",
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        }
+    ]
+}
+```
+
 ## Building the application
 
 Output will be in the `dist` folder
 
 ```bash
 npm run build
+```
+
+## Running in production
+
+Using nodejs, run the `index.js` in the `dist` folder.
+
+```bash
+node dist/index.js
 ```
 
 ## Environment variables and configurations
