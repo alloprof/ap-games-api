@@ -2,6 +2,28 @@
 
 Basic API boilerplate for Alloprof applications.
 
+## Table of contents
+
+- [Alloprof API boilerplate](#alloprof-api-boilerplate)
+  - [Table of contents](#table-of-contents)
+  - [Stack](#stack)
+  - [Getting started](#getting-started)
+  - [Running the project in development mode](#running-the-project-in-development-mode)
+  - [Testing with Jest](#testing-with-jest)
+  - [Debugging the application](#debugging-the-application)
+  - [Building the application](#building-the-application)
+  - [Running in production](#running-in-production)
+  - [Environment variables and configurations](#environment-variables-and-configurations)
+    - [.env](#env)
+    - [tsconfig.json](#tsconfigjson)
+    - [jest.config.js](#jestconfigjs)
+  - [Project architecture and adding new router](#project-architecture-and-adding-new-router)
+  - [Adding new endpoint or route](#adding-new-endpoint-or-route)
+    - [Create a folder to encapsulate your endpoint's feature](#create-a-folder-to-encapsulate-your-endpoints-feature)
+    - [Add route to the main app](#add-route-to-the-main-app)
+  - [Writing tests with Jest and Supertest](#writing-tests-with-jest-and-supertest)
+  - [Convention about tests](#convention-about-tests)
+
 ## Stack
 
 - nodejs 20.13+
