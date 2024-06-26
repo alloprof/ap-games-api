@@ -16,11 +16,6 @@ COPY tsconfig.json /tmp/build/tsconfig.json
 
 RUN chown -R node:node /tmp/build /app
 
-RUN set -ex &&\
-    echo "[user]" > /home/node/.gitconfig &&\
-    echo "  name = alloprof-robot" >> /home/node/.gitconfig &&\
-    echo "  email = bbonnaudet+robot@alloprof.qc.ca" >> /home/node/.gitconfig
-
 RUN npm install -g npm@$NPM_VERSION
 
 USER node
