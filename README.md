@@ -26,8 +26,8 @@ Basic API boilerplate for Alloprof applications.
 
 ## Stack
 
-- nodejs 20.13+
-- npm 10.5+
+- nodejs 22.11+
+- npm 10.9+
 - typescript is preferred, javascript is not disabled
 - jest for tests
 - express to serve requests

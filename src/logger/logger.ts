@@ -7,8 +7,8 @@ const apiName = config.apiName
 const logLevel = config.logLevel
 
 const loggingBunyan = new LoggingBunyan({
- logName: apiName,
-   redirectToStdout: true,
+  logName: apiName,
+  redirectToStdout: true,
 })
 
 const logger = bunyan.createLogger({

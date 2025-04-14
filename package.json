@@ -4,8 +4,8 @@
   "description": "Alloprof API Boilerplate",
   "main": "index.js",
   "engines": {
-    "node": ">=20.14.0",
-    "npm": ">=10.7.0"
+    "node": ">=22.11.0",
+    "npm": ">=10.9.0"
   },
   "scripts": {
     "dev": "tsc -w & node --watch dist/index.js | bunyan",
