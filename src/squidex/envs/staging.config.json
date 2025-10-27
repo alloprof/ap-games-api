@@ -1,0 +1,7 @@
+{
+  "SQUIDEX_CLIENT_ID": "exerciseurs:backendreader",
+  "SQUIDEX_CLIENT_SECRET": "le9nlo40lt6y29n5fsfdgixumh90xl4uqlwdyg7tvfcx",
+  "SQUIDEX_EXERCISERS_APP": "exerciseurs",
+  "SQUIDEX_GRAPHQL_URL": "https://squidex.alloprof-staging.ca/api/content/{{app}}/graphql",
+  "SQUIDEX_IDENT_URL": "https://squidex.alloprof-staging.ca/identity-server/connect/token"
+}

@@ -1,0 +1,7 @@
+{
+  "SQUIDEX_CLIENT_ID": "exerciseurs:backendreader",
+  "SQUIDEX_CLIENT_SECRET": "your-local-client-secret",
+  "SQUIDEX_EXERCISERS_APP": "exerciseurs",
+  "SQUIDEX_GRAPHQL_URL": "http://localhost:5000/api/content/{{app}}/graphql",
+  "SQUIDEX_IDENT_URL": "http://localhost:5000/identity-server/connect/token"
+}

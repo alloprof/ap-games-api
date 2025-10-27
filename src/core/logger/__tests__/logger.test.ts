@@ -16,7 +16,7 @@ describe('logger', () => {
     }
   })
   it('should call bunyan logging and output locally', () => {
-    const config = require('../../config').config
+    const config = require('../../config/config').config
     config.bunyanLogging = false
 
     const logger = require('../logger').logger
@@ -25,7 +25,7 @@ describe('logger', () => {
     expect(spyLogWarn).toHaveBeenCalledWith('test')
   })
   it('should call bunyan logging with stream to Google Cloud enabled', () => {
-    const config = require('../../config').config
+    const config = require('../../config/config').config
     config.bunyanLogging = true
 
     const logger = require('../logger').logger
@@ -35,7 +35,7 @@ describe('logger', () => {
   })
   test('should log all requests', async () => {
     const spyLogInfo = jest.spyOn(require('bunyan').prototype, 'info')
-    const server = require('../../app').server
+    const server = require('../../../app').server
     await request(server).get('/status')
 
     expect(spyLogInfo).toHaveBeenCalledWith({ method: 'GET', url: '/status' })

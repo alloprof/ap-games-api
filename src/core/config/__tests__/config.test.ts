@@ -11,7 +11,7 @@ describe('config', () => {
       PORT: undefined,
     }
   })
-  it ('should have default values', () => {
+  it('should have default values', () => {
     const { config } = require('../config')
 
     expect(config.apiName).toEqual('ap-api')

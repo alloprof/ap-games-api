@@ -4,3 +4,7 @@ node_modules/
 .vscode/
 .env
 .history
+
+# Environment configs (keep only examples)
+src/core/config/envs/*.config.json
+!src/core/config/envs/*.config.example.json

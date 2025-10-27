@@ -1,7 +1,8 @@
-import bunyan from 'bunyan'
 import { LoggingBunyan } from '@google-cloud/logging-bunyan'
-import { config } from '../config'
+import bunyan from 'bunyan'
 import express from 'express'
+
+import { config } from '../config/config'
 
 const apiName = config.apiName
 const logLevel = config.logLevel
@@ -28,7 +29,7 @@ if (config.enableRequestLogging) {
   router.use((req, _res, next) => {
     logger.info({
       method: req.method,
-      url: req.url
+      url: req.url,
     })
     next()
   })

@@ -1,4 +1,5 @@
 import request from 'supertest'
+
 import { server } from '../../app'
 
 describe('status should return 200', () => {

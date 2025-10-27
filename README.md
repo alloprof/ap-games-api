@@ -1,10 +1,10 @@
-# Alloprof API boilerplate
+# Alloprof API
 
-Basic API boilerplate for Alloprof applications.
+Games API for Alloprof applications.
 
 ## Table of contents
 
-- [Alloprof API boilerplate](#alloprof-api-boilerplate)
+- [Alloprof API games](#alloprof-games-api)
   - [Table of contents](#table-of-contents)
   - [Stack](#stack)
   - [Getting started](#getting-started)
@@ -68,7 +68,7 @@ Otherwise, it's possible to create a `.vscode/launch.json` file, here's an examp
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch API Boilerplate",
+            "name": "Launch API games",
             "skipFiles": [
                 "<node_internals>/**"
             ],
@@ -102,7 +102,7 @@ node dist/index.js
 ### .env
 
 ```bash
-API_NAME='api-boilerplate' # The name of the API used by the logger. It's used to identify the application in StackDriver.
+API_NAME='api-games' # The name of the API used by the logger. It's used to identify the application in StackDriver.
 BUNYAN_LOGGING='false' # Setting this to 'true' will enable Google Cloud Logging. 'false' should be used in local development
 LOG_LEVEL='info' # Default log level, production should be set to 'error'
 ENABLE_REQUEST_LOGGING='true' # This setting will enable or disable requests logging.
