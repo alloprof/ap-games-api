@@ -1,0 +1,28 @@
+name: Validate Branch and Commits
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate:
+    runs-on: alloprof-github-action-runners
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Make scripts executable
+        run: |
+          chmod +x .github/scripts/validate-branch-name.sh
+          chmod +x .github/scripts/validate-commit-name.sh
+
+      - name: Validate branch name
+        run: |
+          ./.github/scripts/validate-branch-name.sh "${{ github.head_ref }}"
+
+      - name: Validate commit messages
+        run: |
+          echo "🔍 Validating commit messages..."
+          git log origin/${{ github.base_ref }}..HEAD --pretty=format:"%s" | ./.github/scripts/validate-commit-name.sh --multiple

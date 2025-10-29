@@ -1,0 +1,94 @@
+# .github/workflows/trivy-scan-and-upload.yml
+
+name: Trivy Scan and Upload to GCS
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  scan-and-upload:
+    name: Trivy Scan and Upload
+    runs-on: alloprof-github-action-runners
+    steps:
+      - name: Setup GCloud with Cache
+        uses: alloprof/.github/.github/actions/alloprof-runners-setup-gcloud-with-cache@v1.0.0
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          workload_identity_provider: 'projects/330174153822/locations/global/workloadIdentityPools/gh-workload-identity-pool/providers/gh-workload-identity-provider'
+          service_account: 'trivy-scanner@alloprof-tools.iam.gserviceaccount.com'
+
+      - name: Run Trivy Filesystem Scan
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'json'
+          output: 'trivy-fs-results.json'
+          exit-code: '0'
+
+      - name: Check for Terraform files
+        id: check_tf_files
+        run: |
+          if find . -type f -name "*.tf" -print -quit | grep -q .; then
+            echo "Terraform files found. Proceeding with IaC scan."
+            echo "tf_files_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "No Terraform files found. Skipping IaC scan."
+            echo "tf_files_exist=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Run Trivy IaC Scan on Terraform files
+        if: steps.check_tf_files.outputs.tf_files_exist == 'true'
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'json'
+          output: 'trivy-config-results.json'
+          exit-code: '0'
+
+      - name: Parse Results and Upload Summary
+        id: parse_and_upload
+        run: |
+          crit_fs_vuln_amount=0
+          high_fs_vuln_amount=0
+          crit_iac_vuln_amount=0
+          high_iac_vuln_amount=0
+
+          if [ -s "trivy-fs-results.json" ] && [ "$(jq '.Results' trivy-fs-results.json)" != "null" ]; then
+            crit_fs_vuln_amount=$(jq '([.Results[].Vulnerabilities[]? | select(.Severity=="CRITICAL")]) | length' trivy-fs-results.json)
+            high_fs_vuln_amount=$(jq '([.Results[].Vulnerabilities[]? | select(.Severity=="HIGH")]) | length' trivy-fs-results.json)
+          fi
+
+          if [ -s "trivy-config-results.json" ] && [ "$(jq '.Results' trivy-config-results.json)" != "null" ]; then
+            crit_iac_vuln_amount=$(jq '([.Results[].Misconfigurations[]? | select(.Severity=="CRITICAL")]) | length' trivy-config-results.json)
+            high_iac_vuln_amount=$(jq '([.Results[].Misconfigurations[]? | select(.Severity=="HIGH")]) | length' trivy-config-results.json)
+          fi
+
+          cat <<EOF > trivy-summary.json
+          {
+            "crit_fs_vuln_amount": ${crit_fs_vuln_amount},
+            "high_fs_vuln_amount": ${high_fs_vuln_amount},
+            "crit_iac_vuln_amount": ${crit_iac_vuln_amount},
+            "high_iac_vuln_amount": ${high_iac_vuln_amount}
+          }
+          EOF
+
+          BUCKET_NAME="alloprof-tools-trivy-scan-results-summaries"
+          REPO_NAME=$(echo "${{ github.repository }}" | tr '/' '_')
+
+          gcloud storage cp trivy-summary.json "gs://${BUCKET_NAME}/${REPO_NAME}.json"
+        shell: bash

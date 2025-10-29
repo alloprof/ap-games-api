@@ -1,0 +1,152 @@
+# Nom du workflow
+name: 'Deploy to Bouboule on PR Comment'
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  deploy-to-bouboule:
+    if: github.event.issue.pull_request && github.event.comment.body == '/deploy-bouboule'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get PR Branch Name
+        id: get_branch
+        run: |
+          BRANCH_NAME=$(gh pr view ${{ github.event.issue.number }} --json headRefName -q .headRefName)
+          echo "SOURCE_BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # NOUVEAU: Étape 1 - Créer un commentaire "en cours"
+      - name: Post 'in progress' comment
+        id: in_progress_comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ⏳ Déploiement sur **Bouboule** initié depuis la branche `${{ env.SOURCE_BRANCH_NAME }}`...
+            Je vous tiens au courant du résultat.
+          reactions: eyes
+
+      - name: Setup Git User
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+      # C'est ici que la magie opère (le déploiement)
+      - name: Force update Bouboule to match PR branch
+        id: deploy
+        run: |
+          # Le contenu du script de déploiement reste le même
+          set -e
+          TARGET_BRANCH="qa-bouboule"
+          SOURCE_BRANCH="${{ env.SOURCE_BRANCH_NAME }}"
+          echo "Comment trigger detected. Source branch is: $SOURCE_BRANCH"
+          git fetch origin
+          git checkout $TARGET_BRANCH
+          git reset --hard origin/$SOURCE_BRANCH
+          git push --force origin $TARGET_BRANCH
+          echo "✅ Bouboule branch has been forcefully updated to match $SOURCE_BRANCH."
+
+      # NOUVEAU: Étape 2 - Mettre à jour le commentaire en cas de SUCCÈS
+      - name: Update comment on success
+        if: success() # Ne s'exécute que si les étapes précédentes ont réussi
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          # On utilise l'ID du commentaire créé à la première étape
+          comment-id: ${{ steps.in_progress_comment.outputs.comment-id }}
+          body: |
+            ✅ **Succès !**
+            La branche `${{ env.SOURCE_BRANCH_NAME }}` a été déployée sur **Bouboule**.
+          reactions: '+1'
+
+      # NOUVEAU: Étape 3 - Mettre à jour le commentaire en cas d'ÉCHEC
+      - name: Update comment on failure
+        if: failure() # Ne s'exécute que si une étape a échoué
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.in_progress_comment.outputs.comment-id }}
+          body: |
+            ❌ **Échec du déploiement !**
+            La mise à jour de **Bouboule** a échoué.
+            Consultez les [logs de l'action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) pour plus de détails.
+          reactions: confused
+      - name: Send Google Chat Card Notification
+        if: always()
+        run: |
+          # On prépare les variables dynamiques (message et boutons)
+          if [ "${{ job.status }}" == "success" ]; then
+            CARD_HEADER_TITLE="[Bouboule] Déploiement"
+            WIDGET_TEXT="✅ La branch <code>${{ env.SOURCE_BRANCH_NAME }}</code> est en cours de deploiement sur <b>Bouboule</b>."
+            BUTTONS='{
+              "buttonList": {
+                "buttons": [
+                  {
+                    "text": "Voir la Pull Request",
+                    "onClick": { "openLink": { "url": "${{ github.event.issue.pull_request.html_url }}" } }
+                  },
+                  {
+                    "text": "Suivre le build GCP",
+                    "onClick": { "openLink": { "url": "https://console.cloud.google.com/cloud-build/builds;region=northamerica-northeast1?project=alloprof-qa-bouboule" } }
+                  }
+                ]
+              }
+            }'
+          else
+            CARD_HEADER_TITLE="Échec du Déploiement"
+            WIDGET_TEXT="❌ Le déploiement a échoué."
+            BUTTONS='{
+              "buttonList": {
+                "buttons": [
+                  {
+                    "text": "Voir la Pull Request",
+                    "onClick": { "openLink": { "url": "${{ github.event.issue.pull_request.html_url }}" } }
+                  },
+                  {
+                    "text": "Voir les Logs GitHub",
+                    "onClick": { "openLink": { "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" } }
+                  }
+                ]
+              }
+            }'
+          fi
+
+          # On assemble la carte JSON finale
+          JSON_PAYLOAD=$(cat <<EOF
+          {
+            "cardsV2": [ {
+              "cardId": "deploy-card",
+              "card": {
+                "header": {
+                  "title": "$CARD_HEADER_TITLE",
+                  "subtitle": "${{ github.repository }} - ${{ env.SOURCE_BRANCH_NAME }}",
+                  "imageUrl": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+                  "imageType": "CIRCLE"
+                },
+                "sections": [ {
+                  "widgets": [
+                    { "textParagraph": { "text": "$WIDGET_TEXT" } },
+                    $BUTTONS
+                  ]
+                } ]
+              }
+            } ]
+          }
+          EOF
+          )
+
+          # On envoie la carte au webhook
+          curl -X POST -H 'Content-Type: application/json; charset=UTF-8' \
+          -d "$JSON_PAYLOAD" \
+          "https://chat.googleapis.com/v1/spaces/AAQAA5Mklt4/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=tffyufcak0EP8lsW4qDo3bZuYbtWkBa4t-M-WoZ-3Iw"
