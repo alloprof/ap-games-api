@@ -1,0 +1,54 @@
+name: Trivy Vulnerability Scan
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    name: Trivy Scan
+    runs-on: alloprof-github-action-runners
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Filesystem Scan
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'table'
+          output: 'trivy-fs-results.txt'
+          exit-code: '0'
+
+      - name: Check for Terraform files
+        id: check_tf_files
+        run: |
+          if find . -type f -name "*.tf" -print -quit | grep -q .; then
+            echo "tf_files_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "tf_files_exist=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Run Trivy IaC Scan on Terraform files
+        if: steps.check_tf_files.outputs.tf_files_exist == 'true'
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'table'
+          output: 'trivy-config-results.txt'
+          exit-code: '0'
+
+      - name: Upload Trivy Scans as Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-scan-results
+          path: |
+            trivy-fs-results.txt
+            trivy-config-results.txt
