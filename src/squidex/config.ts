@@ -1,19 +1,20 @@
-import fs from 'fs'
-import path from 'path'
-
 import { logger } from '../core/logger/logger'
 
 /* =========================================
  * Types
  * ========================================= */
-export type Environment = 'local' | 'staging' | 'production'
+export type Environment = 'local' | 'staging' | 'production' | 'gustave'
 
-export interface SquidexConfig {
-  SQUIDEX_CLIENT_ID: string
-  SQUIDEX_CLIENT_SECRET: string
-  SQUIDEX_EXERCISERS_APP: string
-  SQUIDEX_GRAPHQL_URL: string
-  SQUIDEX_IDENT_URL: string
+export interface SquidexAppConfig {
+  clientId: string
+  clientSecret: string
+  url?: string // URL to Squidex installation (cloud.squidex.io by default)
+}
+
+export interface SquidexEnvConfig {
+  defaultUrl: string
+  defaultApp: string
+  apps: Record<string, SquidexAppConfig>
 }
 
 /* =========================================
@@ -29,6 +30,7 @@ export const getEnvironment = (): Environment => {
     case 'production':
     case 'staging':
     case 'local':
+    case 'gustave':
       return env as Environment
     default:
       return 'local'
@@ -38,35 +40,18 @@ export const getEnvironment = (): Environment => {
 /* =========================================
  * Config loader
  * ========================================= */
-let cachedConfig: SquidexConfig | null = null
+let cachedConfig: SquidexEnvConfig | null = null
 
 /**
- * Load environment-specific configuration object from:
- *   src/core/config/envs/<environment>.config.json
- * Fallbacks to <environment>.config.example.json if main file is missing.
+ * Load environment-specific configuration from TypeScript module
  */
-export const loadEnvConfig = <T = SquidexConfig>(environment: Environment): T => {
+export const loadEnvConfig = (environment: Environment): SquidexEnvConfig => {
   try {
-    const baseDir = path.join(process.cwd(), 'src', 'squidex', 'envs')
-    const configPath = path.join(baseDir, `${environment}.config.json`)
-    const examplePath = path.join(baseDir, `${environment}.config.example.json`)
+    // Dynamic require based on environment
 
-    if (fs.existsSync(configPath)) {
-      const content = fs.readFileSync(configPath, 'utf-8')
-      const parsed = JSON.parse(content) as T
-      logger.info(`Loaded ${environment} configuration from ${configPath}`)
-      return parsed
-    }
-
-    logger.warn(`Config file not found: ${configPath}, using example config if available`)
-    if (fs.existsSync(examplePath)) {
-      const content = fs.readFileSync(examplePath, 'utf-8')
-      const parsed = JSON.parse(content) as T
-      logger.info(`Loaded ${environment} example configuration from ${examplePath}`)
-      return parsed
-    }
-
-    throw new Error(`Neither config nor example config found for environment: ${environment}`)
+    const configModule = require(`./envs/${environment}.config`)
+    logger.info(`Loaded ${environment} configuration`)
+    return configModule.config as SquidexEnvConfig
   } catch (error) {
     logger.error(`Failed to load config for environment ${environment}:`, error)
     throw error
@@ -76,44 +61,70 @@ export const loadEnvConfig = <T = SquidexConfig>(environment: Environment): T =>
 /**
  * Get configuration for current environment (with simple in-memory cache).
  */
-export const getEnvConfig = <T = SquidexConfig>(): T => {
-  if (cachedConfig) return cachedConfig as unknown as T
+export const getEnvConfig = (): SquidexEnvConfig => {
+  if (cachedConfig) return cachedConfig
   const environment = getEnvironment()
-  const cfg = loadEnvConfig<T>(environment)
-  // Cache only if it matches SquidexConfig shape (best-effort)
-  cachedConfig = cfg as unknown as SquidexConfig
+  const cfg = loadEnvConfig(environment)
+  cachedConfig = cfg
   return cfg
 }
 
 /* =========================================
  * Squidex helpers
  * ========================================= */
-const config: SquidexConfig = getEnvConfig<SquidexConfig>()
+const config: SquidexEnvConfig = getEnvConfig()
 
-/**
- * Build the GraphQL URL for a specific Squidex app.
- * Replaces "{{app}}" in SQUIDEX_GRAPHQL_URL by provided app or default app.
- */
-export const getGraphUrl = (app?: string): string => {
-  const appName = app || config.SQUIDEX_EXERCISERS_APP
-  return config.SQUIDEX_GRAPHQL_URL.replace('{{app}}', appName)
+/** Get default app name */
+export const getDefaultApp = (): string => config.defaultApp
+
+/** Get list of available apps */
+export const getAvailableApps = (): string[] => Object.keys(config.apps)
+
+/** Get default URL */
+export const getDefaultUrl = (): string => config.defaultUrl
+
+/** Get URL for a specific app (uses app's URL or default) */
+export const getAppUrl = (app?: string): string => {
+  const appName = app || config.defaultApp
+  const appConfig = config.apps[appName]
+
+  if (!appConfig) {
+    throw new Error(
+      `App "${appName}" not found in configuration. Available apps: ${getAvailableApps().join(', ')}`
+    )
+  }
+
+  return appConfig.url || config.defaultUrl
 }
 
-/** Identity URL for authentication */
-export const getIdentUrl = (): string => config.SQUIDEX_IDENT_URL
+/** Get client credentials for a specific app */
+export const getClientCredentials = (app?: string): SquidexAppConfig => {
+  const appName = app || config.defaultApp
+  const appConfig = config.apps[appName]
 
-/** Client credentials */
-export const getClientCredentials = () => ({
-  clientId: config.SQUIDEX_CLIENT_ID,
-  clientSecret: config.SQUIDEX_CLIENT_SECRET,
-})
+  if (!appConfig) {
+    throw new Error(
+      `App "${appName}" not found in configuration. Available apps: ${getAvailableApps().join(', ')}`
+    )
+  }
+
+  return appConfig
+}
+
+/** Check if an app exists in configuration */
+export const hasApp = (app: string): boolean => {
+  return app in config.apps
+}
 
 /* =========================================
  * Export full config + helpers
  * ========================================= */
 export const squidexConfig = {
   ...config,
-  getGraphUrl,
-  getIdentUrl,
+  getDefaultApp,
+  getDefaultUrl,
+  getAppUrl,
+  getAvailableApps,
   getClientCredentials,
+  hasApp,
 }

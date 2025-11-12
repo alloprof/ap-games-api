@@ -4,9 +4,7 @@ export interface SquidexConfig {
   appName: string
   clientId: string
   clientSecret: string
-  baseUrl: string
-  graphqlUrl: string
-  identUrl: string
+  url: string // URL to Squidex installation
 }
 
 export interface SquidexAuthToken {

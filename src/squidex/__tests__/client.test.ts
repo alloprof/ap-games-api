@@ -6,9 +6,7 @@ describe('SquidexClient', () => {
     appName: 'test-app',
     clientId: 'test-client-id',
     clientSecret: 'test-client-secret',
-    baseUrl: 'https://cloud.squidex.io',
-    graphqlUrl: 'https://cloud.squidex.io/api/content/{{app}}/graphql',
-    identUrl: 'https://cloud.squidex.io/identity-server/connect/token',
+    url: 'https://cloud.squidex.io',
   }
 
   let client: SquidexClient
@@ -23,15 +21,21 @@ describe('SquidexClient', () => {
     })
   })
 
+  describe('authenticate', () => {
+    it('should have an authenticate method', () => {
+      expect(client.authenticate).toBeDefined()
+    })
+  })
+
   describe('getContent', () => {
-    it('should throw not implemented error', async () => {
-      await expect(client.getContent('test-schema')).rejects.toThrow('Not implemented')
+    it('should have a getContent method', () => {
+      expect(client.getContent).toBeDefined()
     })
   })
 
   describe('getContentById', () => {
-    it('should throw not implemented error', async () => {
-      await expect(client.getContentById('test-schema', '123')).rejects.toThrow('Not implemented')
+    it('should have a getContentById method', () => {
+      expect(client.getContentById).toBeDefined()
     })
   })
 })
