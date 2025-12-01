@@ -1,7 +1,0 @@
-{
-  "SQUIDEX_CLIENT_ID": "exerciseurs:backendreader",
-  "SQUIDEX_CLIENT_SECRET": "your-production-client-secret",
-  "SQUIDEX_EXERCISERS_APP": "exerciseurs",
-  "SQUIDEX_GRAPHQL_URL": "https://squidex.alloprof.ca/api/content/{{app}}/graphql",
-  "SQUIDEX_IDENT_URL": "https://squidex.alloprof.ca/identity-server/connect/token"
-}
