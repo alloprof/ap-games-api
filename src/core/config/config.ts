@@ -86,7 +86,7 @@ const loadConfigFromFile = (): GamesConfig | null => {
 
     const fileContent = fs.readFileSync(absolutePath, 'utf-8')
     const config = JSON.parse(fileContent)
-    console.log(`✅ Loaded games config from: ${configPath}`)
+    console.log(`Loaded games config from: ${configPath}`)
     return config
   } catch (error) {
     console.error('Failed to load games config file:', error)

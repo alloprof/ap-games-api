@@ -35,4 +35,4 @@ const server = express()
 const basePath = config.basePath
 server.use(basePath, app)
 
-export { server }
+export { server, app }

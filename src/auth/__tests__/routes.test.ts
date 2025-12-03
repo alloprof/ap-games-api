@@ -1,6 +1,6 @@
 import request from 'supertest'
 
-import { server } from '../../app'
+import { app } from '../../app'
 import * as authServices from '../services'
 
 // Mock the auth services
@@ -20,7 +20,7 @@ describe('Auth Routes', () => {
     })
 
     it('should return 400 if idToken is missing', async () => {
-      const response = await request(server).post('/auth/user-custom-token').send({})
+      const response = await request(app).post('/auth/user-custom-token').send({})
 
       expect(response.status).toBe(400)
       expect(response.body).toEqual({
@@ -33,7 +33,7 @@ describe('Auth Routes', () => {
     it('should return 401 if token verification fails', async () => {
       mockGetUserFromToken.mockResolvedValue(null)
 
-      const response = await request(server)
+      const response = await request(app)
         .post('/auth/user-custom-token')
         .send({ idToken: 'invalid-token' })
 
@@ -64,7 +64,7 @@ describe('Auth Routes', () => {
       mockGetUserFromToken.mockResolvedValue(mockDecodedToken)
       mockGetCustomLoginToken.mockResolvedValue(null)
 
-      const response = await request(server)
+      const response = await request(app)
         .post('/auth/user-custom-token')
         .send({ idToken: 'valid-token' })
 
@@ -96,7 +96,7 @@ describe('Auth Routes', () => {
       mockGetUserFromToken.mockResolvedValue(mockDecodedToken)
       mockGetCustomLoginToken.mockResolvedValue(mockCustomToken)
 
-      const response = await request(server)
+      const response = await request(app)
         .post('/auth/user-custom-token')
         .send({ idToken: 'valid-token' })
 
