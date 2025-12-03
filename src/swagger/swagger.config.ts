@@ -48,6 +48,10 @@ const options: swaggerJsdoc.Options = {
         name: 'Auth',
         description: 'Authentication and authorization endpoints',
       },
+      {
+        name: 'Games',
+        description: 'Firebase Authentication and Firestore operations for games',
+      },
     ],
     components: {
       schemas: {

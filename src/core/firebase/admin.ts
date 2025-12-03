@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin'
 
+import { config } from '../config/config'
 import { logger } from '../logger/logger'
 
 let firebaseApp: admin.app.App | null = null
@@ -19,8 +20,21 @@ export const initializeFirebase = (): admin.app.App => {
     return firebaseApp
   } catch {
     try {
-      firebaseApp = admin.initializeApp()
-      logger.info('Firebase Admin initialized with default credentials')
+      // Get project ID from config
+      const projectId = config.firebaseFrontendConfig?.projectId
+
+      if (projectId) {
+        // Initialize with specific project ID
+        firebaseApp = admin.initializeApp({
+          projectId,
+        })
+        logger.info(`Firebase Admin initialized for project: ${projectId}`)
+      } else {
+        // Fallback to default credentials
+        firebaseApp = admin.initializeApp()
+        logger.info('Firebase Admin initialized with default credentials')
+      }
+
       return firebaseApp
     } catch (error) {
       logger.error('Failed to initialize Firebase Admin:', error)

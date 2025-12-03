@@ -5,6 +5,6 @@ node_modules/
 .env
 .history
 
-# Environment configs (keep only examples)
-src/core/config/envs/*.config.json
-!src/core/config/envs/*.config.example.json
+# Configuration files (keep only examples)
+config/games.*.json
+!config/games.example.json

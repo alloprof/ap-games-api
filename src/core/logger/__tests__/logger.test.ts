@@ -35,16 +35,24 @@ describe('logger', () => {
   })
   test('should log all requests', async () => {
     const spyLogInfo = jest.spyOn(require('bunyan').prototype, 'info')
-    const server = require('../../../app').server
-    await request(server).get('/status')
+    const app = require('../../../app').app
+    await request(app).get('/status')
 
-    expect(spyLogInfo).toHaveBeenCalledWith({ method: 'GET', url: '/status' })
+    expect(spyLogInfo).toHaveBeenCalled()
+    const calls = spyLogInfo.mock.calls
+    const requestLogCall = calls.find((call) => {
+      const arg = call[0] as Record<string, unknown>
+      return arg?.method === 'GET' && arg?.url === '/status'
+    })
+    expect(requestLogCall).toBeDefined()
   })
   afterEach(() => {
     process.env = originalEnv
+    jest.clearAllMocks()
   })
   afterAll(() => {
     process.env = originalEnv
+    jest.restoreAllMocks()
   })
 })
 

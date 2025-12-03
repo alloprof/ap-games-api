@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express'
 
+import { config } from '../core/config/config'
 import { logger } from '../core/logger/logger'
 
 import {
@@ -8,7 +9,6 @@ import {
   UpdateContentOptions,
   DeleteContentOptions,
 } from './client'
-import { squidexConfig } from './config'
 import { validateSchema, validateContentId, validateContentData } from './middleware'
 import { SquidexConfig } from './types'
 
@@ -21,12 +21,12 @@ const squidexClients: Map<string, SquidexClient> = new Map()
  * Get or create a Squidex client for the specified app
  */
 function getClient(app?: string): SquidexClient {
-  const appName = app || squidexConfig.getDefaultApp()
+  const appName = app || config.getSquidexDefaultApp()
 
   // Validate app exists
-  if (!squidexConfig.hasApp(appName)) {
+  if (!config.hasSquidexApp(appName)) {
     throw new Error(
-      `App "${appName}" not found. Available apps: ${squidexConfig.getAvailableApps().join(', ')}`
+      `App "${appName}" not found. Available apps: ${config.getSquidexAvailableApps().join(', ')}`
     )
   }
 
@@ -36,15 +36,15 @@ function getClient(app?: string): SquidexClient {
   }
 
   // Create new client
-  const credentials = squidexConfig.getClientCredentials(appName)
-  const config: SquidexConfig = {
+  const credentials = config.getSquidexClientCredentials(appName)
+  const squidexConfig: SquidexConfig = {
     appName,
     clientId: credentials.clientId,
     clientSecret: credentials.clientSecret,
-    url: squidexConfig.getAppUrl(appName),
+    url: config.getSquidexAppUrl(appName),
   }
 
-  const client = new SquidexClient(config)
+  const client = new SquidexClient(squidexConfig)
   squidexClients.set(appName, client)
   return client
 }
@@ -61,16 +61,16 @@ function getClientFromRequest(req: Request): SquidexClient {
  * Get app name from request (for logging)
  */
 function getAppName(req: Request): string {
-  return (req.query.app as string) || squidexConfig.getDefaultApp()
+  return (req.query.app as string) || config.getSquidexDefaultApp()
 }
 
 // Get configuration info (for debugging/testing)
 router.get('/config', (_req: Request, res: Response) => {
   res.status(200).json({
-    defaultUrl: squidexConfig.getDefaultUrl(),
-    defaultApp: squidexConfig.getDefaultApp(),
-    availableApps: squidexConfig.getAvailableApps(),
-    apps: squidexConfig.apps,
+    defaultUrl: config.getSquidexDefaultUrl(),
+    defaultApp: config.getSquidexDefaultApp(),
+    availableApps: config.getSquidexAvailableApps(),
+    apps: config.squidexApps,
   })
 })
 

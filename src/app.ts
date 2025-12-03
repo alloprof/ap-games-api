@@ -5,6 +5,7 @@ import { authRouter } from './auth'
 import { config } from './core/config/config'
 import { initializeFirebase } from './core/firebase'
 import { loggerRouter } from './core/logger/logger'
+import { gamesRouter } from './games'
 import { squidexRouter } from './squidex'
 import { statusRouter } from './status/status'
 import { swaggerRouter } from './swagger'
@@ -26,6 +27,7 @@ app.use(express.json())
 app.use(loggerRouter)
 app.use('/status', statusRouter)
 app.use('/auth', authRouter)
+app.use(gamesRouter)
 app.use('/squidex', squidexRouter)
 app.use('/api-docs', swaggerRouter)
 
@@ -33,4 +35,4 @@ const server = express()
 const basePath = config.basePath
 server.use(basePath, app)
 
-export { server }
+export { server, app }
