@@ -1,3 +1,6 @@
+import * as fs from 'fs'
+import * as path from 'path'
+
 import * as admin from 'firebase-admin'
 
 import { config } from '../config/config'
@@ -7,7 +10,8 @@ let firebaseApp: admin.app.App | null = null
 
 /**
  * Initialize Firebase Admin SDK
- * Can be initialized with credentials or use Application Default Credentials (ADC)
+ * 1. Service account key file (if FIREBASE_SERVICE_ACCOUNT_PATH is set)
+ * 2. Application Default Credentials (ADC)
  */
 export const initializeFirebase = (): admin.app.App => {
   if (firebaseApp) {
@@ -20,17 +24,40 @@ export const initializeFirebase = (): admin.app.App => {
     return firebaseApp
   } catch {
     try {
-      // Get project ID from config
+      const serviceAccountPath = config.firebaseServiceAccountPath
       const projectId = config.firebaseFrontendConfig?.projectId
 
+      if (serviceAccountPath) {
+        const absolutePath = path.isAbsolute(serviceAccountPath)
+          ? serviceAccountPath
+          : path.join(process.cwd(), serviceAccountPath)
+
+        if (fs.existsSync(absolutePath)) {
+          const serviceAccount = JSON.parse(fs.readFileSync(absolutePath, 'utf-8'))
+
+          firebaseApp = admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: serviceAccount.project_id || projectId,
+          })
+
+          logger.info(`Firebase Admin initialized with service account: ${serviceAccountPath}`)
+          return firebaseApp
+        } else {
+          logger.warn(
+            `Service account file not found: ${absolutePath}. Falling back to ADC or default credentials.`
+          )
+        }
+      }
+
+      // Application Default Credentials (ADC)
       if (projectId) {
-        // Initialize with specific project ID
         firebaseApp = admin.initializeApp({
           projectId,
         })
-        logger.info(`Firebase Admin initialized for project: ${projectId}`)
+        logger.info(
+          `Firebase Admin initialized with Application Default Credentials for project: ${projectId}`
+        )
       } else {
-        // Fallback to default credentials
         firebaseApp = admin.initializeApp()
         logger.info('Firebase Admin initialized with default credentials')
       }

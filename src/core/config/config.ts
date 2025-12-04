@@ -45,6 +45,7 @@ interface GamesConfig {
   FUNCTION_ENVIRONMENT?: string
   ANALYTICS_SECRET_KEY?: string
   GAMES_MEASUREMENT_ID?: string
+  FIREBASE_SERVICE_ACCOUNT_PATH?: string
   FIREBASE_FRONTEND_CONFIG?: FirebaseFrontendConfig
   TEXT_TO_SPEECH_INSTANCE?: string
   EXERCISER_TYPES?: ExerciserTypes
@@ -198,6 +199,10 @@ export const config = {
   ),
   analyticsSecretKey: getConfigValue(fileConfig?.ANALYTICS_SECRET_KEY, 'ANALYTICS_SECRET_KEY'),
   gamesMeasurementId: getConfigValue(fileConfig?.GAMES_MEASUREMENT_ID, 'GAMES_MEASUREMENT_ID'),
+  firebaseServiceAccountPath: getConfigValue(
+    fileConfig?.FIREBASE_SERVICE_ACCOUNT_PATH,
+    'FIREBASE_SERVICE_ACCOUNT_PATH'
+  ),
   firebaseFrontendConfig: parseFirebaseFrontendConfig(),
   firebaseApiKey: parseFirebaseFrontendConfig().apiKey,
   textToSpeechInstance: getConfigValue(

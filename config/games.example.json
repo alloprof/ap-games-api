@@ -15,6 +15,7 @@
   "FUNCTION_ENVIRONMENT": "",
   "ANALYTICS_SECRET_KEY": "",
   "GAMES_MEASUREMENT_ID": "",
+  "FIREBASE_SERVICE_ACCOUNT_PATH": "service-accounts/firebase.example.json",
   "FIREBASE_FRONTEND_CONFIG": {
     "apiKey": "",
     "authDomain": "",

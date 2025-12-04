@@ -8,3 +8,6 @@ node_modules/
 # Configuration files (keep only examples)
 config/games.*.json
 !config/games.example.json
+
+service-accounts/firebase.*.json
+!service-accounts/firebase.example.json
