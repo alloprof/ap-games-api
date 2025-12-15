@@ -54,7 +54,16 @@ router.post(
         })
       }
 
-      const result = await loginWithEmailPassword(email, password, config.firebaseApiKey)
+      if (!config.firebaseWebApiKey) {
+        return res.status(500).json({
+          success: false,
+          code: 'missing-firebase-api-key',
+          name: 'ConfigError',
+          message: 'Firebase Web API Key is not configured',
+        })
+      }
+
+      const result = await loginWithEmailPassword(email, password, config.firebaseWebApiKey)
       res.json(result)
     } catch (error) {
       logger.error('Error in /login:', error)
@@ -90,7 +99,16 @@ router.post(
         })
       }
 
-      const result = await refreshIdToken(refreshToken, config.firebaseApiKey)
+      if (!config.firebaseWebApiKey) {
+        return res.status(500).json({
+          success: false,
+          code: 'missing-firebase-api-key',
+          name: 'ConfigError',
+          message: 'Firebase Web API Key is not configured',
+        })
+      }
+
+      const result = await refreshIdToken(refreshToken, config.firebaseWebApiKey)
       res.json(result)
     } catch (error) {
       logger.error('Error in /refresh:', error)
