@@ -35,8 +35,20 @@ Games API for Alloprof applications.
 ## Getting started
 
 ```bash
+# Copy environment variables template
 mv .env.example .env
+
+# Install dependencies
 npm install
+
+# Configure Firebase authentication
+# Option 1: Use gcloud Application Default Credentials (recommended for development)
+gcloud auth application-default login
+
+# Option 2: Use service account (recommended for production)
+# Copy your service account JSON file to service-accounts/firebase.json
+# Set FIREBASE_SERVICE_ACCOUNT_PATH in .env
+
 ```
 
 ## Running the project in development mode
@@ -97,18 +109,6 @@ Using nodejs, run the `index.js` in the `dist` folder.
 node dist/index.js
 ```
 
-## Environment variables and configurations
-
-### .env
-
-```bash
-API_NAME='api-games' # The name of the API used by the logger. It's used to identify the application in StackDriver.
-BUNYAN_LOGGING='false' # Setting this to 'true' will enable Google Cloud Logging. 'false' should be used in local development
-LOG_LEVEL='info' # Default log level, production should be set to 'error'
-ENABLE_REQUEST_LOGGING='true' # This setting will enable or disable requests logging.
-PORT='8200' # Default port for application serving
-BASE_PATH='/' # Default path to be used. This setting assumes that this application will be part of a greater proxy environment and that the service will be used along other applications.
-```
 
 ### tsconfig.json
 
