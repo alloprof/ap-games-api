@@ -45,7 +45,7 @@ npm install
 # Option 1: Use gcloud Application Default Credentials (recommended for development)
 gcloud auth application-default login
 
-# Option 2: Use service account (recommended for production)
+# Option 2: Use service account
 # Copy your service account JSON file to service-accounts/firebase.json
 # Set FIREBASE_SERVICE_ACCOUNT_PATH in .env
 
