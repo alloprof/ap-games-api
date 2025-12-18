@@ -1,4 +1,4 @@
-FROM bitnami/node:22.11.0 as builder
+FROM bitnamilegacy/node:22.11.0 as builder
 ARG NPM_VERSION=10.9.0
 
 ARG UID=1001
@@ -23,7 +23,7 @@ USER node
 RUN cd /tmp/build/ && npm ci && npm run build:production
 
 # FINAL IMAGE
-FROM bitnami/node:22.11.0
+FROM bitnamilegacy/node:22.11.0
 
 COPY --from=builder /tmp/build/dist /app
 
