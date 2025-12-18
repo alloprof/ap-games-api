@@ -1,4 +1,4 @@
-FROM bitnami/node:22.11.0 as builder
+FROM bitnamilegacy/node:22.11.0 as builder
 ARG NPM_VERSION=10.9.0
 
 ARG UID=1001
