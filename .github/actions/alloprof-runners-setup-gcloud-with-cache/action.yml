@@ -1,0 +1,31 @@
+name: 'Setup GCloud with Cache'
+description: 'Installs or restores the latest gcloud SDK from cache and adds it to the PATH.'
+runs:
+  using: "composite"
+  steps:
+    - name: Get latest gcloud SDK version
+      id: get-version
+      shell: bash
+      run: |
+        LATEST_VERSION=$(curl -s "https://dl.google.com/dl/cloudsdk/channels/rapid/components-2.json" | jq -r '.version')
+        echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+
+    - name: Cache gcloud SDK
+      id: cache-gcloud
+      uses: actions/cache@v4
+      with:
+        path: /home/runner/_work/_tool/gcloud/${{ steps.get-version.outputs.version }}/x64
+        key: gcloud-sdk-${{ runner.os }}-${{ steps.get-version.outputs.version }}
+
+    - name: Install Google Cloud SDK (Cache Miss)
+      if: steps.cache-gcloud.outputs.cache-hit != 'true'
+      uses: 'google-github-actions/setup-gcloud@v2'
+      with:
+        version: ${{ steps.get-version.outputs.version }}
+
+    - name: Add GCloud to PATH (Cache Hit)
+      if: steps.cache-gcloud.outputs.cache-hit == 'true'
+      shell: bash
+      run: |
+        echo "GCloud SDK found in cache. Adding to PATH."
+        echo "/home/runner/_work/_tool/gcloud/${{ steps.get-version.outputs.version }}/x64/bin" >> $GITHUB_PATH
