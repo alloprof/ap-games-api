@@ -3,12 +3,7 @@ import axios from 'axios'
 import { getAuth, getFirebaseAdmin } from '../core/firebase'
 import { logger } from '../core/logger/logger'
 
-import type {
-  ErrorResponse,
-  FirebaseLoginResponse,
-  RefreshTokenResponse,
-  SendEventRequest,
-} from './types'
+import type { ErrorResponse, FirebaseLoginResponse, RefreshTokenResponse } from './types'
 import type { DecodedIdToken } from 'firebase-admin/auth'
 
 /**
@@ -20,11 +15,13 @@ export const getFirestore = () => {
 
 /**
  * Verify and decode a Firebase ID token
+ * Checks if the user's tokens have been revoked
  */
 export const getUserFromToken = async (token: string): Promise<DecodedIdToken | null> => {
   try {
     const auth = getAuth()
-    const decodedToken = await auth.verifyIdToken(token)
+    // checkRevoked = true ensures revoked tokens are rejected immediately
+    const decodedToken = await auth.verifyIdToken(token, true)
     return decodedToken
   } catch (error) {
     logger.error('Failed to verify token:', error)
@@ -43,6 +40,21 @@ export const getCustomLoginToken = async (decodedToken: DecodedIdToken): Promise
   } catch (error) {
     logger.error('Failed to create custom token:', error)
     return null
+  }
+}
+
+/**
+ * Revoke all refresh tokens for a user (logout)
+ */
+export const revokeUserTokens = async (uid: string): Promise<boolean> => {
+  try {
+    const auth = getAuth()
+    await auth.revokeRefreshTokens(uid)
+    logger.info(`Successfully revoked tokens for user: ${uid}`)
+    return true
+  } catch (error) {
+    logger.error('Failed to revoke tokens:', error)
+    return false
   }
 }
 
@@ -166,7 +178,7 @@ export const getUserInfo = async (idToken: string) => {
  * Send analytics event to Google Analytics Measurement Protocol
  */
 export const sendAnalyticsEvent = async (
-  eventData: SendEventRequest,
+  eventData: { client_id: string; event: string; params?: Record<string, unknown> },
   measurementId: string,
   apiSecret: string
 ): Promise<boolean> => {
