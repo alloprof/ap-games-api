@@ -54,6 +54,14 @@ const options: swaggerJsdoc.Options = {
       },
     ],
     components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Enter your Firebase ID token obtained from /login endpoint',
+        },
+      },
       schemas: {
         SquidexContent: {
           type: 'object',
