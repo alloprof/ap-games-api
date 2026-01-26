@@ -18,6 +18,9 @@ router.get(
   swaggerUi.setup(swaggerSpec, {
     customCss: '.swagger-ui .topbar { display: none }',
     customSiteTitle: 'Alloprof Games API Documentation',
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
   })
 )
 

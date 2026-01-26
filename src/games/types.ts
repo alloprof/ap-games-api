@@ -71,6 +71,7 @@ export interface FirestoreWriteResponse {
 }
 
 export interface SendEventRequest {
+  idToken: string
   client_id: string
   event: string
   params?: Record<string, unknown>

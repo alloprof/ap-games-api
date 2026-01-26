@@ -2,6 +2,7 @@ import express from 'express'
 
 import { config } from '../core/config/config'
 import { logger } from '../core/logger/logger'
+import { apiRateLimiter, authRateLimiter } from '../core/middleware/rateLimiter'
 
 import {
   getCustomLoginToken,
@@ -10,6 +11,7 @@ import {
   getUserInfo,
   loginWithEmailPassword,
   refreshIdToken,
+  revokeUserTokens,
   sendAnalyticsEvent,
 } from './services'
 
@@ -38,6 +40,7 @@ const router = express.Router()
  */
 router.post(
   '/login',
+  authRateLimiter,
   async (
     req: express.Request<object, FirebaseLoginResponse | ErrorResponse, FirebaseLoginRequest>,
     res: express.Response<FirebaseLoginResponse | ErrorResponse>
@@ -83,6 +86,7 @@ router.post(
  */
 router.post(
   '/refresh',
+  authRateLimiter,
   async (
     req: express.Request<object, RefreshTokenResponse | ErrorResponse, RefreshTokenRequest>,
     res: express.Response<RefreshTokenResponse | ErrorResponse>
@@ -112,6 +116,66 @@ router.post(
       res.json(result)
     } catch (error) {
       logger.error('Error in /refresh:', error)
+      res.status(500).json({
+        success: false,
+        code: 'internal-error',
+        name: 'ServerError',
+        message: 'An unexpected error occurred',
+      })
+    }
+  }
+)
+
+/**
+ * POST /logout
+ * Revoke all refresh tokens for the authenticated user
+ */
+router.post(
+  '/logout',
+  async (
+    req: express.Request<object, unknown, UserInfoRequest>,
+    res: express.Response<unknown>
+  ) => {
+    try {
+      const { idToken } = req.body
+
+      if (!idToken) {
+        return res.status(400).json({
+          success: false,
+          code: 'missing-id-token',
+          name: 'ValidationError',
+          message: 'ID token is required',
+        })
+      }
+
+      const decodedToken = await getUserFromToken(idToken)
+
+      if (!decodedToken) {
+        return res.status(401).json({
+          success: false,
+          code: 'invalid-token',
+          name: 'AuthError',
+          message: 'Invalid or expired ID token',
+        })
+      }
+
+      const success = await revokeUserTokens(decodedToken.uid)
+
+      if (!success) {
+        return res.status(500).json({
+          success: false,
+          code: 'revocation-failed',
+          name: 'ServerError',
+          message: 'Failed to revoke tokens',
+        })
+      }
+
+      res.json({
+        success: true,
+        message: 'All refresh tokens have been revoked',
+      })
+    } catch (error) {
+      logger.error('Error in /logout:', error)
       res.status(500).json({
         success: false,
         code: 'internal-error',
@@ -392,13 +456,29 @@ router.post(
  */
 router.post(
   '/sendevent',
+  apiRateLimiter,
   async (
     req: express.Request<object, SendEventResponse, SendEventRequest>,
     res: express.Response<SendEventResponse>
   ) => {
     try {
-      const { client_id, event, params } = req.body
+      const { idToken, client_id, event, params } = req.body
 
+      // Verify authentication
+      if (!idToken) {
+        return res.status(401).json({
+          success: false,
+        })
+      }
+
+      const decodedToken = await getUserFromToken(idToken)
+      if (!decodedToken) {
+        return res.status(401).json({
+          success: false,
+        })
+      }
+
+      // Validate request
       if (!client_id || !event) {
         return res.status(400).json({
           success: false,
@@ -502,6 +582,18 @@ router.get('/man', async (req: express.Request, res: express.Response) => {
         customToken: 'custom token string',
       },
     },
+    '/logout': {
+      status: 'implemented',
+      description: 'revoke all refresh tokens for the authenticated user',
+      method: 'POST',
+      body: {
+        idToken: 'token given by /login',
+      },
+      returns: {
+        success: true,
+        message: 'All refresh tokens have been revoked',
+      },
+    },
     '/fsread': {
       status: 'implemented',
       description: 'firestore read',
@@ -534,9 +626,10 @@ router.get('/man', async (req: express.Request, res: express.Response) => {
     },
     '/sendevent': {
       status: 'implemented',
-      description: 'send analytics event',
+      description: 'send analytics event (requires authentication)',
       method: 'POST',
       body: {
+        idToken: 'user session token',
         client_id: 'unique identifier for the device sending the event',
         event: 'string',
         params: {
