@@ -1,7 +1,9 @@
 import { LogLevel } from 'bunyan'
 import dotenv from 'dotenv'
 
-import { SquidexAppConfig, parseSquidexApps } from './helpers'
+import { parseSquidexApps, ALLOWED_SQUIDEX_APPS, isAllowedSquidexApp } from '../../squidex/utils'
+
+import type { SquidexAppConfig } from '../../squidex/types'
 
 dotenv.config()
 
@@ -21,6 +23,7 @@ interface Config {
   squidexDefaultApp: string
   squidexApps: Record<string, SquidexAppConfig>
   getSquidexDefaultApp(): string
+  getSquidexAllowedApps(): string[]
   getSquidexAvailableApps(): string[]
   getSquidexDefaultUrl(): string
   getSquidexAppUrl(app?: string): string
@@ -46,13 +49,17 @@ export const config: Config = {
   firebaseWebApiKey: process.env.FIREBASE_WEB_API_KEY || '',
 
   // Squidex Configuration
-  squidexDefaultUrl: process.env.SQUIDEX_DEFAULT_URL || '',
+  squidexDefaultUrl: process.env.SQUIDEX_URL || process.env.SQUIDEX_DEFAULT_URL || '',
   squidexDefaultApp: process.env.SQUIDEX_DEFAULT_APP || '',
   squidexApps: parseSquidexApps(),
 
   // Squidex Helper Functions
   getSquidexDefaultApp(): string {
     return this.squidexDefaultApp
+  },
+
+  getSquidexAllowedApps(): string[] {
+    return [...ALLOWED_SQUIDEX_APPS]
   },
 
   getSquidexAvailableApps(): string[] {
@@ -69,7 +76,9 @@ export const config: Config = {
 
     if (!appConfig) {
       throw new Error(
-        `App "${appName}" not found in configuration. Available apps: ${this.getSquidexAvailableApps().join(', ')}`
+        `App "${appName}" not found in configuration. Allowed apps: ${this.getSquidexAllowedApps().join(
+          ', '
+        )}. Configured apps: ${this.getSquidexAvailableApps().join(', ')}`
       )
     }
 
@@ -82,7 +91,9 @@ export const config: Config = {
 
     if (!appConfig) {
       throw new Error(
-        `App "${appName}" not found in configuration. Available apps: ${this.getSquidexAvailableApps().join(', ')}`
+        `App "${appName}" not found in configuration. Allowed apps: ${this.getSquidexAllowedApps().join(
+          ', '
+        )}. Configured apps: ${this.getSquidexAvailableApps().join(', ')}`
       )
     }
 
@@ -90,6 +101,6 @@ export const config: Config = {
   },
 
   hasSquidexApp(app: string): boolean {
-    return app in this.squidexApps
+    return isAllowedSquidexApp(app) && app in this.squidexApps
   },
 }

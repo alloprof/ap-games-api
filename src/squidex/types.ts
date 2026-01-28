@@ -1,5 +1,11 @@
 // Squidex API types and interfaces
 
+export interface SquidexAppConfig {
+  clientId: string
+  clientSecret: string
+  url?: string
+}
+
 export interface SquidexConfig {
   appName: string
   clientId: string
