@@ -1,20 +1,36 @@
 import rateLimit from 'express-rate-limit'
 
+import type { Request } from 'express'
+
+interface LoginRequestBody {
+  email: string
+  password: string
+}
+
 /**
- * Rate limiter for authentication endpoints (login, refresh)
+ * Rate limiter for login endpoint only
  * Prevents brute force attacks
+ * Uses email as the key - each user has their own limit
  */
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 requests per windowMs
+  max: 10, // Limit each email to 10 requests per windowMs
+  keyGenerator: (req: Request<object, unknown, LoginRequestBody>): string => {
+    const { email } = req.body
+    return email.toLowerCase().trim()
+  },
+  skip: (req: Request<object, unknown, LoginRequestBody>): boolean => {
+    // Skip rate limiting if email is missing (will be handled by validation)
+    return !req.body?.email || typeof req.body.email !== 'string'
+  },
   message: {
     success: false,
     code: 'too-many-requests',
     name: 'RateLimitError',
     message: 'Too many authentication attempts, please try again later',
   },
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  standardHeaders: true,
+  legacyHeaders: false,
 })
 
 /**
