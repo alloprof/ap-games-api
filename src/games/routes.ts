@@ -453,6 +453,7 @@ router.post(
 /**
  * POST /sendevent
  * Send an analytics event to Google Analytics
+ * Authentication is optional - allows anonymous analytics
  */
 router.post(
   '/sendevent',
@@ -462,21 +463,7 @@ router.post(
     res: express.Response<SendEventResponse>
   ) => {
     try {
-      const { idToken, client_id, event, params } = req.body
-
-      // Verify authentication
-      if (!idToken) {
-        return res.status(401).json({
-          success: false,
-        })
-      }
-
-      const decodedToken = await getUserFromToken(idToken)
-      if (!decodedToken) {
-        return res.status(401).json({
-          success: false,
-        })
-      }
+      const { client_id, event, params, measurement_id } = req.body
 
       // Validate request
       if (!client_id || !event) {
@@ -485,9 +472,12 @@ router.post(
         })
       }
 
+      // Use client measurement_id if provided, otherwise fall back to server config
+      const measurementId = measurement_id || config.gamesMeasurementId
+
       const success = await sendAnalyticsEvent(
         { client_id, event, params },
-        config.gamesMeasurementId,
+        measurementId,
         config.analyticsSecretKey
       )
 
@@ -626,15 +616,16 @@ router.get('/man', async (req: express.Request, res: express.Response) => {
     },
     '/sendevent': {
       status: 'implemented',
-      description: 'send analytics event (requires authentication)',
+      description: 'send analytics event (no authentication required)',
       method: 'POST',
       body: {
-        idToken: 'user session token',
         client_id: 'unique identifier for the device sending the event',
         event: 'string',
         params: {
           customParam: 'custom value',
         },
+        measurement_id:
+          '(optional) Google Analytics measurement ID - if not provided, uses server default',
       },
       returns: {
         success: true,

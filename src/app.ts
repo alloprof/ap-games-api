@@ -6,10 +6,11 @@ import { authRouter } from './auth'
 import { config } from './core/config/config'
 import { initializeFirebase } from './core/firebase'
 import { loggerRouter } from './core/logger/logger'
+import { exercisersRouter } from './exercisers'
 import { gamesRouter } from './games'
-import { squidexRouter } from './squidex'
+//import { squidexRouter } from './squidex'
 import { statusRouter } from './status/status'
-import { swaggerRouter } from './swagger'
+//import { swaggerRouter } from './swagger'
 
 // Initialize Firebase Admin
 initializeFirebase()
@@ -19,7 +20,7 @@ const app = express()
 // Configure CORS to allow requests from Angular dev server
 app.use(
   cors({
-    origin: ['http://localhost:4200', 'http://localhost:57170'],
+    origin: ['http://localhost:4200', 'http://localhost:57170', 'http://localhost:3000'],
     credentials: true,
   })
 )
@@ -30,8 +31,9 @@ app.use(loggerRouter)
 app.use('/status', statusRouter)
 app.use('/auth', authRouter)
 app.use(gamesRouter)
-app.use('/squidex', squidexRouter)
-app.use('/api-docs', swaggerRouter)
+//app.use('/squidex', squidexRouter)
+app.use('/exercisers', exercisersRouter)
+//app.use('/api-docs', swaggerRouter)
 
 const server = express()
 const basePath = config.basePath
