@@ -69,6 +69,7 @@ router.get('/config', (_req: Request, res: Response) => {
   res.status(200).json({
     defaultUrl: config.getSquidexDefaultUrl(),
     defaultApp: config.getSquidexDefaultApp(),
+    allowedApps: config.getSquidexAllowedApps(),
     availableApps: config.getSquidexAvailableApps(),
     apps: config.squidexApps,
   })
