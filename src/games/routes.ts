@@ -2,12 +2,12 @@ import express from 'express'
 
 import { config } from '../core/config/config'
 import { logger } from '../core/logger/logger'
+import { requireAuth, getDecodedToken } from '../core/middleware/firebaseAuth'
 import { apiRateLimiter, authRateLimiter } from '../core/middleware/rateLimiter'
 
 import {
   getCustomLoginToken,
   getFirestore,
-  getUserFromToken,
   getUserInfo,
   loginWithEmailPassword,
   refreshIdToken,
@@ -25,11 +25,13 @@ import type {
   FirestoreReadResponse,
   FirestoreWriteRequest,
   FirestoreWriteResponse,
+  LogoutResponse,
   RefreshTokenRequest,
   RefreshTokenResponse,
   SendEventRequest,
   SendEventResponse,
   UserInfoRequest,
+  UserInfoResponse,
 } from './types'
 
 const router = express.Router()
@@ -132,33 +134,13 @@ router.post(
  */
 router.post(
   '/logout',
+  requireAuth,
   async (
-    req: express.Request<object, unknown, UserInfoRequest>,
-    res: express.Response<unknown>
+    _req: express.Request<object, LogoutResponse | ErrorResponse, UserInfoRequest>,
+    res: express.Response<LogoutResponse | ErrorResponse>
   ) => {
     try {
-      const { idToken } = req.body
-
-      if (!idToken) {
-        return res.status(400).json({
-          success: false,
-          code: 'missing-id-token',
-          name: 'ValidationError',
-          message: 'ID token is required',
-        })
-      }
-
-      const decodedToken = await getUserFromToken(idToken)
-
-      if (!decodedToken) {
-        return res.status(401).json({
-          success: false,
-          code: 'invalid-token',
-          name: 'AuthError',
-          message: 'Invalid or expired ID token',
-        })
-      }
-
+      const decodedToken = getDecodedToken(res)
       const success = await revokeUserTokens(decodedToken.uid)
 
       if (!success) {
@@ -192,30 +174,21 @@ router.post(
  */
 router.post(
   '/userinfo',
+  requireAuth,
   async (
-    req: express.Request<object, unknown, UserInfoRequest>,
-    res: express.Response<unknown>
+    _req: express.Request<object, UserInfoResponse | ErrorResponse, UserInfoRequest>,
+    res: express.Response<UserInfoResponse | ErrorResponse>
   ) => {
     try {
-      const { idToken } = req.body
-
-      if (!idToken) {
-        return res.status(400).json({
-          success: false,
-          code: 'missing-id-token',
-          name: 'ValidationError',
-          message: 'ID token is required',
-        })
-      }
-
-      const userInfo = await getUserInfo(idToken)
+      const decodedToken = getDecodedToken(res)
+      const userInfo = await getUserInfo(decodedToken.uid)
 
       if (!userInfo) {
-        return res.status(401).json({
+        return res.status(500).json({
           success: false,
-          code: 'invalid-token',
-          name: 'AuthError',
-          message: 'Invalid or expired ID token',
+          code: 'user-not-found',
+          name: 'ServerError',
+          message: 'Failed to retrieve user info',
         })
       }
 
@@ -238,33 +211,13 @@ router.post(
  */
 router.post(
   '/user-custom-token',
+  requireAuth,
   async (
-    req: express.Request<object, CustomTokenResponse | ErrorResponse, CustomTokenRequest>,
+    _req: express.Request<object, CustomTokenResponse | ErrorResponse, CustomTokenRequest>,
     res: express.Response<CustomTokenResponse | ErrorResponse>
   ) => {
     try {
-      const { idToken } = req.body
-
-      if (!idToken) {
-        return res.status(400).json({
-          success: false,
-          code: 'missing-id-token',
-          name: 'ValidationError',
-          message: 'ID token is required',
-        })
-      }
-
-      const decodedToken = await getUserFromToken(idToken)
-
-      if (!decodedToken) {
-        return res.status(401).json({
-          success: false,
-          code: 'invalid-token',
-          name: 'AuthError',
-          message: 'Invalid or expired ID token',
-        })
-      }
-
+      const decodedToken = getDecodedToken(res)
       const customToken = await getCustomLoginToken(decodedToken)
 
       if (!customToken) {
@@ -295,21 +248,13 @@ router.post(
  */
 router.post(
   '/fsread',
+  requireAuth,
   async (
     req: express.Request<object, FirestoreReadResponse, FirestoreReadRequest>,
     res: express.Response<FirestoreReadResponse>
   ) => {
     try {
-      const { idToken, document } = req.body
-
-      if (!idToken) {
-        return res.status(400).json({
-          success: false,
-          code: 'missing-id-token',
-          name: 'ValidationError',
-          message: 'ID token is required',
-        })
-      }
+      const { document } = req.body
 
       if (!document || !Array.isArray(document) || document.length === 0) {
         return res.status(400).json({
@@ -320,18 +265,6 @@ router.post(
         })
       }
 
-      // Verify user token
-      const decodedToken = await getUserFromToken(idToken)
-      if (!decodedToken) {
-        return res.status(401).json({
-          success: false,
-          code: 'invalid-token',
-          name: 'AuthError',
-          message: 'Invalid or expired ID token',
-        })
-      }
-
-      // Read from Firestore using Admin SDK
       const db = getFirestore()
       const docRef = db.doc(document.join('/'))
       const docSnap = await docRef.get()
@@ -374,21 +307,13 @@ router.post(
  */
 router.post(
   '/fswrite',
+  requireAuth,
   async (
     req: express.Request<object, FirestoreWriteResponse, FirestoreWriteRequest>,
     res: express.Response<FirestoreWriteResponse>
   ) => {
     try {
-      const { idToken, document, data, options } = req.body
-
-      if (!idToken) {
-        return res.status(400).json({
-          success: false,
-          code: 'missing-id-token',
-          name: 'ValidationError',
-          message: 'ID token is required',
-        })
-      }
+      const { document, data, options } = req.body
 
       if (!document || !Array.isArray(document) || document.length === 0) {
         return res.status(400).json({
@@ -408,27 +333,11 @@ router.post(
         })
       }
 
-      // Verify user token
-      const decodedToken = await getUserFromToken(idToken)
-      if (!decodedToken) {
-        return res.status(401).json({
-          success: false,
-          code: 'invalid-token',
-          name: 'AuthError',
-          message: 'Invalid or expired ID token',
-        })
-      }
-
-      // Write to Firestore using Admin SDK
       const db = getFirestore()
       const docRef = db.doc(document.join('/'))
-
-      // Set document with options
       await docRef.set(data, options || {})
 
-      res.json({
-        success: true,
-      })
+      res.json({ success: true })
     } catch (error) {
       logger.error('Error in /fswrite:', error)
 
@@ -452,7 +361,7 @@ router.post(
 
 /**
  * POST /sendevent
- * Send an analytics event to Google Analytics
+ * Send an analytics event to Google Analytics (public, no auth required)
  */
 router.post(
   '/sendevent',
@@ -462,27 +371,10 @@ router.post(
     res: express.Response<SendEventResponse>
   ) => {
     try {
-      const { idToken, client_id, event, params } = req.body
+      const { client_id, event, params } = req.body
 
-      // Verify authentication
-      if (!idToken) {
-        return res.status(401).json({
-          success: false,
-        })
-      }
-
-      const decodedToken = await getUserFromToken(idToken)
-      if (!decodedToken) {
-        return res.status(401).json({
-          success: false,
-        })
-      }
-
-      // Validate request
       if (!client_id || !event) {
-        return res.status(400).json({
-          success: false,
-        })
+        return res.status(400).json({ success: false })
       }
 
       const success = await sendAnalyticsEvent(
@@ -503,7 +395,7 @@ router.post(
  * GET /man
  * Get API documentation
  */
-router.get('/man', async (req: express.Request, res: express.Response) => {
+router.get('/man', async (_req: express.Request, res: express.Response) => {
   res.json({
     '/login': {
       status: 'implemented',
@@ -626,10 +518,9 @@ router.get('/man', async (req: express.Request, res: express.Response) => {
     },
     '/sendevent': {
       status: 'implemented',
-      description: 'send analytics event (requires authentication)',
+      description: 'send analytics event (public, no auth required)',
       method: 'POST',
       body: {
-        idToken: 'user session token',
         client_id: 'unique identifier for the device sending the event',
         event: 'string',
         params: {

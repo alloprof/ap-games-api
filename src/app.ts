@@ -6,6 +6,8 @@ import { authRouter } from './auth'
 import { config } from './core/config/config'
 import { initializeFirebase } from './core/firebase'
 import { loggerRouter } from './core/logger/logger'
+import { requireApiKey } from './core/middleware/apiKeyAuth'
+import { squidexRateLimiter } from './core/middleware/rateLimiter'
 import { gamesRouter } from './games'
 import { squidexRouter } from './squidex'
 import { statusRouter } from './status/status'
@@ -30,7 +32,7 @@ app.use(loggerRouter)
 app.use('/status', statusRouter)
 app.use('/auth', authRouter)
 app.use(gamesRouter)
-app.use('/squidex', squidexRouter)
+app.use('/squidex', squidexRateLimiter, requireApiKey, squidexRouter)
 app.use('/api-docs', swaggerRouter)
 
 const server = express()

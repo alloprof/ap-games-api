@@ -40,6 +40,34 @@ export interface CustomTokenResponse {
   customToken: string
 }
 
+export interface LogoutResponse {
+  success: boolean
+  message?: string
+  code?: string
+  name?: string
+}
+
+export interface UserInfoResponse {
+  uid: string
+  email?: string
+  emailVerified: boolean
+  displayName?: string
+  photoURL?: string
+  disabled: boolean
+  metadata: {
+    creationTime?: string
+    lastSignInTime?: string
+  }
+  providerData: Array<{
+    providerId: string
+    uid: string
+    displayName?: string
+    email?: string
+    phoneNumber?: string
+    photoURL?: string
+  }>
+}
+
 export interface FirestoreReadRequest {
   idToken: string
   document: string[]
@@ -71,7 +99,6 @@ export interface FirestoreWriteResponse {
 }
 
 export interface SendEventRequest {
-  idToken: string
   client_id: string
   event: string
   params?: Record<string, unknown>

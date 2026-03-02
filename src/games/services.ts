@@ -3,7 +3,12 @@ import axios from 'axios'
 import { getAuth, getFirebaseAdmin } from '../core/firebase'
 import { logger } from '../core/logger/logger'
 
-import type { ErrorResponse, FirebaseLoginResponse, RefreshTokenResponse } from './types'
+import type {
+  ErrorResponse,
+  FirebaseLoginResponse,
+  RefreshTokenResponse,
+  UserInfoResponse,
+} from './types'
 import type { DecodedIdToken } from 'firebase-admin/auth'
 
 /**
@@ -143,17 +148,12 @@ export const refreshIdToken = async (
 }
 
 /**
- * Get user info from Firebase Auth
+ * Get user info from Firebase Auth by uid
  */
-export const getUserInfo = async (idToken: string) => {
+export const getUserInfo = async (uid: string): Promise<UserInfoResponse | null> => {
   try {
-    const decodedToken = await getUserFromToken(idToken)
-    if (!decodedToken) {
-      return null
-    }
-
     const auth = getAuth()
-    const userRecord = await auth.getUser(decodedToken.uid)
+    const userRecord = await auth.getUser(uid)
 
     return {
       uid: userRecord.uid,

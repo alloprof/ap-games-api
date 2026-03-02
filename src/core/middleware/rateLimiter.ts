@@ -33,3 +33,20 @@ export const apiRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 })
+
+/**
+ * Rate limiter for Squidex content endpoints
+ * Generous limit for game clients fetching questions
+ */
+export const squidexRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 300, // 300 requests per 15 min per IP
+  message: {
+    success: false,
+    code: 'too-many-requests',
+    name: 'RateLimitError',
+    message: 'Too many Squidex requests, please try again later',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+})
