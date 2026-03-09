@@ -10,6 +10,7 @@ import { exercisersRouter } from './exercisers'
 import { gamesRouter } from './games'
 //import { squidexRouter } from './squidex'
 import { statusRouter } from './status/status'
+import { verbivoreRouter } from './verbivore'
 //import { swaggerRouter } from './swagger'
 
 // Initialize Firebase Admin
@@ -33,6 +34,7 @@ app.use('/auth', authRouter)
 app.use(gamesRouter)
 //app.use('/squidex', squidexRouter)
 app.use('/exercisers', exercisersRouter)
+app.use('/verbivore', verbivoreRouter)
 //app.use('/api-docs', swaggerRouter)
 
 const server = express()
