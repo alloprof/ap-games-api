@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
@@ -36,6 +37,8 @@ app.use(gamesRouter)
 app.use('/exercisers', exercisersRouter)
 app.use('/verbivore', verbivoreRouter)
 //app.use('/api-docs', swaggerRouter)
+
+Sentry.setupExpressErrorHandler(app)
 
 const server = express()
 const basePath = config.basePath

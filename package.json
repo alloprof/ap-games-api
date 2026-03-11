@@ -25,6 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "@google-cloud/logging-bunyan": "^5.1.0",
+    "@sentry/node": "^10.43.0",
     "axios": "^1.13.2",
     "bunyan": "^1.8.15",
     "cookie-parser": "^1.4.7",

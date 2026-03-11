@@ -1,3 +1,4 @@
+import './instrument'
 import { server } from './app'
 import { config } from './core/config/config'
 import { logger } from './core/logger/logger'
