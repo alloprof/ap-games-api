@@ -8,9 +8,10 @@ import { initializeFirebase } from './core/firebase'
 import { loggerRouter } from './core/logger/logger'
 import { exercisersRouter } from './exercisers'
 import { gamesRouter } from './games'
-import { squidexRouter } from './squidex'
+//import { squidexRouter } from './squidex'
 import { statusRouter } from './status/status'
-import { swaggerRouter } from './swagger'
+import { verbivoreRouter } from './verbivore'
+//import { swaggerRouter } from './swagger'
 
 // Initialize Firebase Admin
 initializeFirebase()
@@ -31,9 +32,10 @@ app.use(loggerRouter)
 app.use('/status', statusRouter)
 app.use('/auth', authRouter)
 app.use(gamesRouter)
+//app.use('/squidex', squidexRouter)
 app.use('/exercisers', exercisersRouter)
-app.use('/squidex', squidexRouter)
-app.use('/api-docs', swaggerRouter)
+app.use('/verbivore', verbivoreRouter)
+//app.use('/api-docs', swaggerRouter)
 
 const server = express()
 const basePath = config.basePath
